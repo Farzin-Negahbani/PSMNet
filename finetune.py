@@ -53,12 +53,24 @@ elif args.datatype == '2012':
 
 all_left_img, all_right_img, all_left_disp, test_left_img, test_right_img, test_left_disp = ls.dataloader(args.datapath)
 
+### For Left to right Fine Tune
+#TrainImgLoader = torch.utils.data.DataLoader(
+#         DA.myImageFloder(all_left_img,all_right_img,all_left_disp, True), 
+#         batch_size= 12, shuffle= True, num_workers= 8, drop_last=False)
+
+#TestImgLoader = torch.utils.data.DataLoader(
+#         DA.myImageFloder(test_left_img,test_right_img,test_left_disp, False),
+#         batch_size= 8, shuffle= False, num_workers= 4, drop_last=False)
+
+
+### For right to Left Fine Tune
 TrainImgLoader = torch.utils.data.DataLoader(
-         DA.myImageFloder(all_left_img,all_right_img,all_left_disp, True), 
+         DA.myImageFloder(all_right_img,all_left_img,all_right_disp, True),
          batch_size= 12, shuffle= True, num_workers= 8, drop_last=False)
 
+
 TestImgLoader = torch.utils.data.DataLoader(
-         DA.myImageFloder(test_left_img,test_right_img,test_left_disp, False), 
+         DA.myImageFloder(test_right_img,test_left_img,test_right_disp, False), 
          batch_size= 8, shuffle= False, num_workers= 4, drop_last=False)
 
 if args.model == 'stackhourglass':
