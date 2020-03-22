@@ -26,18 +26,17 @@ def dataloader(filepath):
   train = image[:160]
   val   = image[160:]
 
-  #Modified to use right to left
+  #Modified to return everything 
 
   left_train  = [filepath+left_fold+img for img in train]
   right_train = [filepath+right_fold+img for img in train]
-  #disp_train_L = [filepath+disp_L+img for img in train]
+  disp_train_L = [filepath+disp_L+img for img in train]
   disp_train_R = [filepath+disp_R+img for img in train]
 
   left_val  = [filepath+left_fold+img for img in val]
   right_val = [filepath+right_fold+img for img in val]
-  #disp_val_L = [filepath+disp_L+img for img in val]
+  disp_val_L = [filepath+disp_L+img for img in val]
   disp_val_R = [filepath+disp_R+img for img in val]
 
-  #right to left
   #return left_train, right_train, disp_train_L, left_val, right_val, disp_val_L
-  return left_train, right_train, disp_train_R, left_val, right_val, disp_val_R
+  return left_train, right_train, disp_train_L, disp_train_R, left_val, right_val, disp_val_L, disp_val_R

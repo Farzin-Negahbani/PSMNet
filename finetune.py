@@ -36,6 +36,8 @@ parser.add_argument('--loadmodel', default='./trained/submission_model.tar',
                     help='load model')
 parser.add_argument('--savemodel', default='./',
                     help='save model')
+parser.add_argument('--right-to-left', action='store_true',default=False,
+                    help='Trains model for right to Left usage. Note: for now supported on KITTI2015')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
@@ -52,35 +54,29 @@ elif args.datatype == '2012':
    from dataloader import KITTIloader2012 as ls
 
 
-### For Left to right Fine Tune
+all_left_img, all_right_img, all_left_disp, all_right_disp, test_left_img, test_right_img, test_left_disp, test_right_disp = ls.dataloader(args.datapath)
 
-### Modify the dataloader if you want to use the left to right!!!!
-#all_left_img, all_right_img, all_left_disp, test_left_img, test_right_img, test_left_disp = ls.dataloader(args.datapath)
+if not args.right_to_left :
+    #Fine-tunning from Left to Right
+    TrainImgLoader = torch.utils.data.DataLoader(
+            DA.myImageFloder(all_left_img,all_right_img,all_left_disp, True), 
+            batch_size= 12, shuffle= True, num_workers= 8, drop_last=False)
 
-#TrainImgLoader = torch.utils.data.DataLoader(
-#         DA.myImageFloder(all_left_img,all_right_img,all_left_disp, True), 
-#         batch_size= 12, shuffle= True, num_workers= 8, drop_last=False)
+    TestImgLoader = torch.utils.data.DataLoader(
+            DA.myImageFloder(test_left_img,test_right_img,test_left_disp, False),
+            batch_size= 8, shuffle= False, num_workers= 4, drop_last=False)
 
-#TestImgLoader = torch.utils.data.DataLoader(
-#         DA.myImageFloder(test_left_img,test_right_img,test_left_disp, False),
-#         batch_size= 8, shuffle= False, num_workers= 4, drop_last=False)
-
-
-### For right to Left Fine Tune
-
-
-### TODO:  You need to modify the loader 
-all_left_img, all_right_img, all_right_disp, test_left_img, test_right_img, test_right_disp = ls.dataloader(args.datapath)
+else:
+    #Fine-tunning from right to Left
+    TrainImgLoader = torch.utils.data.DataLoader(
+            DA.myImageFloder(all_right_img,all_left_img,all_right_disp, True),
+            batch_size= 12, shuffle= True, num_workers= 8, drop_last=False)
 
 
-TrainImgLoader = torch.utils.data.DataLoader(
-         DA.myImageFloder(all_right_img,all_left_img,all_right_disp, True),
-         batch_size= 12, shuffle= True, num_workers= 8, drop_last=False)
+    TestImgLoader = torch.utils.data.DataLoader(
+            DA.myImageFloder(test_right_img,test_left_img,test_right_disp, False), 
+            batch_size= 8, shuffle= False, num_workers= 4, drop_last=False)
 
-
-TestImgLoader = torch.utils.data.DataLoader(
-         DA.myImageFloder(test_right_img,test_left_img,test_right_disp, False), 
-         batch_size= 8, shuffle= False, num_workers= 4, drop_last=False)
 
 if args.model == 'stackhourglass':
     model = stackhourglass(args.maxdisp)
@@ -101,14 +97,20 @@ print('Number of model parameters: {}'.format(sum([p.data.nelement() for p in mo
 
 optimizer = optim.Adam(model.parameters(), lr=0.1, betas=(0.9, 0.999))
 
-def train(imgL,imgR,disp_L):
+def train(imgS,imgD,disp_T):
+        '''
+        Trains the model
+        In Left to Right Case:
+            imgS -> Left Image
+            imgD -> Right Image
+        '''
         model.train()
-        imgL   = Variable(torch.FloatTensor(imgL))
-        imgR   = Variable(torch.FloatTensor(imgR))   
-        disp_L = Variable(torch.FloatTensor(disp_L))
+        imgS   = Variable(torch.FloatTensor(imgS))
+        imgD   = Variable(torch.FloatTensor(imgD))   
+        disp_T = Variable(torch.FloatTensor(disp_T))
 
         if args.cuda:
-            imgL, imgR, disp_true = imgL.cuda(), imgR.cuda(), disp_L.cuda()
+            imgS, imgD, disp_true = imgS.cuda(), imgD.cuda(), disp_T.cuda()
 
         #---------
         mask = (disp_true > 0)
@@ -118,13 +120,13 @@ def train(imgL,imgR,disp_L):
         optimizer.zero_grad()
         
         if args.model == 'stackhourglass':
-            output1, output2, output3 = model(imgL,imgR)
+            output1, output2, output3 = model(imgS,imgD)
             output1 = torch.squeeze(output1,1)
             output2 = torch.squeeze(output2,1)
             output3 = torch.squeeze(output3,1)
             loss = 0.5*F.smooth_l1_loss(output1[mask], disp_true[mask], size_average=True) + 0.7*F.smooth_l1_loss(output2[mask], disp_true[mask], size_average=True) + F.smooth_l1_loss(output3[mask], disp_true[mask], size_average=True) 
         elif args.model == 'basic':
-            output = model(imgL,imgR)
+            output = model(imgS,imgD)
             output = torch.squeeze(output3,1)
             loss = F.smooth_l1_loss(output3[mask], disp_true[mask], size_average=True)
 
@@ -133,15 +135,15 @@ def train(imgL,imgR,disp_L):
 
         return loss.data[0]
 
-def test(imgL,imgR,disp_true):
+def test(imgS,imgD,disp_true):
         model.eval()
-        imgL   = Variable(torch.FloatTensor(imgL))
-        imgR   = Variable(torch.FloatTensor(imgR))   
+        imgS   = Variable(torch.FloatTensor(imgS))
+        imgD   = Variable(torch.FloatTensor(imgD))   
         if args.cuda:
-            imgL, imgR = imgL.cuda(), imgR.cuda()
+            imgS, imgD = imgS.cuda(), imgD.cuda()
 
         with torch.no_grad():
-            output3 = model(imgL,imgR)
+            output3 = model(imgS,imgD)
 
         pred_disp = output3.data.cpu()
 
@@ -168,6 +170,11 @@ def main():
 	max_acc=0
 	max_epo=0
 	start_full_time = time.time()
+        
+        if not args.right_to_left:
+            print('Fine-tunning from Left to Right.')
+        else:
+            print('Fine-tunning from Right to Left.')
 
 	for epoch in range(1, args.epochs+1):
 	   total_train_loss = 0
@@ -175,18 +182,18 @@ def main():
 	   adjust_learning_rate(optimizer,epoch)
            
                ## training ##
-           for batch_idx, (imgL_crop, imgR_crop, disp_crop_L) in enumerate(TrainImgLoader):
+           for batch_idx, (imgS_crop, imgD_crop, disp_crop_T) in enumerate(TrainImgLoader):
                start_time = time.time() 
 
-               loss = train(imgL_crop,imgR_crop, disp_crop_L)
+               loss = train(imgS_crop,imgD_crop, disp_crop_T)
 	       print('Iter %d training loss = %.3f , time = %.2f' %(batch_idx, loss, time.time() - start_time))
 	       total_train_loss += loss
 	   print('epoch %d total training loss = %.3f' %(epoch, total_train_loss/len(TrainImgLoader)))
 	   
                ## Test ##
 
-           for batch_idx, (imgL, imgR, disp_L) in enumerate(TestImgLoader):
-               test_loss = test(imgL,imgR, disp_L)
+           for batch_idx, (imgS, imgD, disp_T) in enumerate(TestImgLoader):
+               test_loss = test(imgS,imgD, disp_T)
                print('Iter %d 3-px error in val = %.3f' %(batch_idx, test_loss*100))
                total_test_loss += test_loss
 
