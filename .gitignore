@@ -1,0 +1,6 @@
+*.pyc
+models/pretrained/*
+models/trained/*
+dataset/KITTI_15/*
+dataset/KITTI_12/*
+dataset/backup/*
