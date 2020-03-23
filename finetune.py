@@ -44,6 +44,10 @@ parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
+
+# set gpu id used
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+
 torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
@@ -157,7 +161,9 @@ def test(imgS,imgD,disp_true):
         return 1-(float(torch.sum(correct))/float(len(index[0])))
 
 def adjust_learning_rate(optimizer, epoch):
-    if epoch <= 200:
+    # modified for fine-tune from right to left on a model trained for left to right
+    #if epoch <= 200:
+    if epoch <= 100:
        lr = 0.001
     else:
        lr = 0.0001
