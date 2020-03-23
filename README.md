@@ -56,7 +56,7 @@ python finetune.py --maxdisp 192 \
                    --datatype 2015 \
                    --datapath (KITTI 2015 training data folder) \
                    --epochs 300 \
-                   --right-to-left #Fin tunes estimation from right to left\
+                   --right-to-left \ #Fine-tunes estimation from right to left or nothing for left to right
                    --loadmodel (pretrained PSMNet) \
                    --savemodel (path for saving model)
 ```
