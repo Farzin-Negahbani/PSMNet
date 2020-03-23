@@ -1,19 +1,6 @@
 # Pyramid Stereo Matching Network
 
-This repository contains the code (in PyTorch) for "[Pyramid Stereo Matching Network](https://arxiv.org/abs/1803.08669)" paper (CVPR 2018) by [Jia-Ren Chang](https://jiarenchang.github.io/) and [Yong-Sheng Chen](https://people.cs.nctu.edu.tw/~yschen/).
-
-## ※We are working on moving these codes to Python 3.7 and torch 1.4.
-
-### Citation
-```
-@inproceedings{chang2018pyramid,
-  title={Pyramid Stereo Matching Network},
-  author={Chang, Jia-Ren and Chen, Yong-Sheng},
-  booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition},
-  pages={5410--5418},
-  year={2018}
-}
-```
+This repository contains the modified code (in PyTorch) for "[Pyramid Stereo Matching Network](https://arxiv.org/abs/1803.08669)" paper (CVPR 2018) by [Jia-Ren Chang](https://jiarenchang.github.io/) and [Yong-Sheng Chen](https://people.cs.nctu.edu.tw/~yschen/).
 
 ## Contents
 
@@ -69,6 +56,7 @@ python finetune.py --maxdisp 192 \
                    --datatype 2015 \
                    --datapath (KITTI 2015 training data folder) \
                    --epochs 300 \
+                   --right-to-left \ #Fine-tunes estimation from right to left or nothing for left to right
                    --loadmodel (pretrained PSMNet) \
                    --savemodel (path for saving model)
 ```
@@ -138,8 +126,3 @@ The receptive fields were calculated for the pixel at image center, indicated by
 <img align="center" src="https://user-images.githubusercontent.com/11732099/37876179-6d6dd97e-307b-11e8-803e-bcdbec29fb94.png">
 
 
-
-## Contacts
-followwar@gmail.com
-
-Any discussions or concerns are welcomed!
