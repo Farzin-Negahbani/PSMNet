@@ -1,6 +1,6 @@
 # Pyramid Stereo Matching Network
 
-This repository contains the modified code (in PyTorch) for "[Pyramid Stereo Matching Network](https://arxiv.org/abs/1803.08669)" paper (CVPR 2018) by [Jia-Ren Chang](https://jiarenchang.github.io/) and [Yong-Sheng Chen](https://people.cs.nctu.edu.tw/~yschen/).
+This repository contains the modified code (in PyTorch) for "[Pyramid Stereo Matching Network](https://arxiv.org/abs/1803.08669)" paper (CVPR 2018) by [Jia-Ren Chang](https://jiarenchang.github.io/) and [Yong-Sheng Chen](https://people.cs.nctu.edu.tw/~yschen/). Further we added right to left fine tunning and predictions for PSMNet which might be handy if you intend to apply a left-right consistency check. 
 
 ## Contents
 
